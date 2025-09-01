@@ -1,12 +1,581 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Cat Football in Hen House</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Imposter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #6e48aa, #9d50bb);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            text-align: center;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            color: #FFE05D;
+            text-shadow: 3px 3px 0 #FF9642;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #fff;
+        }
+
+        p {
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .btn {
+            background: #FF9642;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            font-family: 'Nunito', sans-serif;
+            box-shadow: 0 4px 0 #d17a36;
+        }
+
+        .btn:hover {
+            background: #FFAD60;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #d17a36;
+        }
+
+        .btn-secondary {
+            background: #6e48aa;
+            box-shadow: 0 4px 0 #553888;
+        }
+
+        .btn-secondary:hover {
+            background: #8363bb;
+        }
+
+        .btn-success {
+            background: #38b764;
+            box-shadow: 0 4px 0 #2a8a4f;
+        }
+
+        .btn-success:hover {
+            background: #45d178;
+        }
+
+        .btn-danger {
+            background: #ff4d4d;
+            box-shadow: 0 4px 0 #cc3e3e;
+        }
+
+        .btn-danger:hover {
+            background: #ff6666;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border-radius: 50px;
+            border: 2px solid #FF9642;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .player-count {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .player-count-btn {
+            background: #6e48aa;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .player-count-btn:hover {
+            background: #8363bb;
+        }
+
+        .player-count-display {
+            font-size: 2rem;
+            font-weight: bold;
+            line-height: 50px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .active {
+            display: block;
+        }
+
+        .room-code {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 10px;
+            margin: 20px 0;
+            color: #FFE05D;
+            text-shadow: 2px 2px 0 #FF9642;
+        }
+
+        .player-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .player-list li {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 50px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .player-list li:before {
+            content: "😊";
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+
+        .player-list li.imposter:before {
+            content: "🎭";
+        }
+
+        .word-input {
+            font-size: 1.5rem;
+            height: 70px;
+            text-align: center;
+        }
+
+        .discussion-area {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 10px 15px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        .vote-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .vote-btn {
+            background: #6e48aa;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .vote-btn:hover {
+            background: #8363bb;
+        }
+
+        .result-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .role-badge {
+            display: inline-block;
+            background: #FF9642;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .imposter-badge {
+            background: #ff4d4d;
+        }
+
+        .word-reveal {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #FFE05D;
+            text-shadow: 2px 2px 0 #FF9642;
+            margin: 20px 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #FFE05D;
+            opacity: 0;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="600" height="400"></canvas>
-  <script src="game.js"></script>
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div class="screen active" id="welcome-screen">
+            <div class="logo">🎭</div>
+            <h1>Word Imposter</h1>
+            <p>Join the fun party game where imposters try to blend in without knowing the secret word!</p>
+            <button class="btn" onclick="showScreen('create-screen')">Create Room</button>
+            <button class="btn btn-secondary" onclick="showScreen('join-screen')">Join Room</button>
+        </div>
+
+        <!-- Create Room Screen -->
+        <div class="screen" id="create-screen">
+            <h1>Create Room</h1>
+            
+            <div class="input-group">
+                <label>Number of Players</label>
+                <div class="player-count">
+                    <button class="player-count-btn" onclick="changePlayerCount(-1)">-</button>
+                    <div class="player-count-display" id="player-count">5</div>
+                    <button class="player-count-btn" onclick="changePlayerCount(1)">+</button>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label>Number of Imposters</label>
+                <select id="imposter-count">
+                    <option>1</option>
+                    <option>2</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label>Secret Word</label>
+                <input type="text" id="secret-word" placeholder="Enter the secret word">
+            </div>
+            
+            <button class="btn btn-success" onclick="createRoom()">Create Game</button>
+            <button class="btn btn-secondary" onclick="showScreen('welcome-screen')">Back</button>
+        </div>
+
+        <!-- Join Room Screen -->
+        <div class="screen" id="join-screen">
+            <h1>Join Room</h1>
+            
+            <div class="input-group">
+                <label>Enter Room Code</label>
+                <input type="text" id="room-code-input" placeholder="e.g. ABCD">
+            </div>
+            
+            <div class="input-group">
+                <label>Your Name</label>
+                <input type="text" id="player-name" placeholder="Enter your name">
+            </div>
+            
+            <button class="btn btn-success" onclick="joinRoom()">Join Game</button>
+            <button class="btn btn-secondary" onclick="showScreen('welcome-screen')">Back</button>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div class="screen" id="lobby-screen">
+            <h1>Room Lobby</h1>
+            <div class="room-code" id="room-code-display">ABCD</div>
+            
+            <p>Share this code with friends to join your game!</p>
+            
+            <h2>Players</h2>
+            <ul class="player-list" id="player-list">
+                <li>Player 1 (Host)</li>
+                <li>Player 2</li>
+            </ul>
+            
+            <button class="btn btn-success" id="start-game-btn" onclick="startGame()">Start Game</button>
+            <button class="btn btn-danger" onclick="leaveRoom()">Leave Room</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="screen" id="game-screen">
+            <h1>Your Word</h1>
+            <div class="word-reveal" id="player-word">BANANA</div>
+            <p id="imposter-message">You are the imposter! Try to guess what word others might be seeing.</p>
+            
+            <div class="input-group">
+                <label>Enter a related word</label>
+                <input type="text" class="word-input" id="word-input" placeholder="Type a word that relates">
+            </div>
+            
+            <button class="btn btn-success" onclick="submitWord()">Submit</button>
+        </div>
+
+        <!-- Discussion Screen -->
+        <div class="screen" id="discussion-screen">
+            <h1>Discussion Time</h1>
+            <p>Discuss who you think the imposter is!</p>
+            
+            <div class="discussion-area" id="discussion-chat">
+                <div class="message">Player 1: I think it's something sweet</div>
+                <div class="message">Player 2: I thought of a color</div>
+                <div class="message">Player 3: Mine is a fruit</div>
+            </div>
+            
+            <button class="btn" onclick="showScreen('voting-screen')">Start Voting</button>
+        </div>
+
+        <!-- Voting Screen -->
+        <div class="screen" id="voting-screen">
+            <h1>Vote for Imposter</h1>
+            <p>Who do you think is the imposter?</p>
+            
+            <div class="vote-options">
+                <button class="vote-btn" onclick="castVote('Player 1')">Player 1</button>
+                <button class="vote-btn" onclick="castVote('Player 2')">Player 2</button>
+                <button class="vote-btn" onclick="castVote('Player 3')">Player 3</button>
+                <button class="vote-btn" onclick="castVote('Player 4')">Player 4</button>
+                <button class="vote-btn" onclick="castVote('Player 5')">Player 5</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="screen" id="results-screen">
+            <h1>Game Results</h1>
+            
+            <div class="result-container">
+                <div class="role-badge" id="player-role">Normal Player</div>
+                <p>The secret word was:</p>
+                <div class="word-reveal">BANANA</div>
+            </div>
+            
+            <h2>Imposters were:</h2>
+            <ul class="player-list">
+                <li class="imposter">Player 3</li>
+            </ul>
+            
+            <button class="btn" onclick="playAgain()">Play Again</button>
+            <button class="btn btn-secondary" onclick="backToLobby()">Back to Lobby</button>
+        </div>
+    </div>
+
+    <script>
+        // Current screen management
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Player count adjustment
+        let playerCount = 5;
+        function changePlayerCount(change) {
+            playerCount = Math.min(12, Math.max(3, playerCount + change));
+            document.getElementById('player-count').textContent = playerCount;
+        }
+
+        // Room creation
+        function createRoom() {
+            const imposterCount = document.getElementById('imposter-count').value;
+            const secretWord = document.getElementById('secret-word').value;
+            
+            if (!secretWord) {
+                alert('Please enter a secret word!');
+                return;
+            }
+            
+            // Generate a random room code
+            const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+            document.getElementById('room-code-display').textContent = roomCode;
+            
+            showScreen('lobby-screen');
+        }
+
+        // Room joining
+        function joinRoom() {
+            const roomCode = document.getElementById('room-code-input').value;
+            const playerName = document.getElementById('player-name').value;
+            
+            if (!roomCode || roomCode.length !== 4) {
+                alert('Please enter a valid 4-character room code!');
+                return;
+            }
+            
+            if (!playerName) {
+                alert('Please enter your name!');
+                return;
+            }
+            
+            // In a real app, you would validate the room code with the server
+            document.getElementById('room-code-display').textContent = roomCode;
+            
+            // Add the player to the list
+            const playerList = document.getElementById('player-list');
+            const newPlayer = document.createElement('li');
+            newPlayer.textContent = playerName;
+            playerList.appendChild(newPlayer);
+            
+            // Disable start button for non-host players
+            document.getElementById('start-game-btn').style.display = 'none';
+            
+            showScreen('lobby-screen');
+        }
+
+        // Start the game
+        function startGame() {
+            // Randomly assign roles (in a real app, this would be done server-side)
+            const isImposter = Math.random() > 0.7; // 30% chance of being imposter
+            
+            if (isImposter) {
+                document.getElementById('player-word').textContent = '???';
+                document.getElementById('imposter-message').style.display = 'block';
+            } else {
+                document.getElementById('player-word').textContent = 'BANANA'; // This would be the actual secret word
+                document.getElementById('imposter-message').style.display = 'none';
+            }
+            
+            showScreen('game-screen');
+        }
+
+        // Submit word
+        function submitWord() {
+            const word = document.getElementById('word-input').value;
+            if (!word) {
+                alert('Please enter a word!');
+                return;
+            }
+            
+            showScreen('discussion-screen');
+        }
+
+        // Cast vote
+        function castVote(player) {
+            showScreen('results-screen');
+            
+            // Animate confetti if the player guessed correctly
+            createConfetti();
+        }
+
+        // Leave room
+        function leaveRoom() {
+            showScreen('welcome-screen');
+        }
+
+        // Play again
+        function playAgain() {
+            showScreen('game-screen');
+        }
+
+        // Back to lobby
+        function backToLobby() {
+            showScreen('lobby-screen');
+        }
+
+        // Confetti animation for results
+        function createConfetti() {
+            const colors = ['#FF9642', '#FFE05D', '#6e48aa', '#38b764', '#ff4d4d'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                
+                document.body.appendChild(confetti);
+                
+                const animation = confetti.animate([
+                    { transform: 'translateY(0) rotate(0)', opacity: 1 },
+                    { transform: `translateY(100vh) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 3000 + 2000,
+                    easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)'
+                });
+                
+                animation.onfinish = () => {
+                    confetti.remove();
+                };
+            }
+        }
+    </script>
 </body>
 </html>
