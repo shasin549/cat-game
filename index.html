@@ -1,819 +1,167 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Imposter</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            color: white;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-        }
-        
-        h1 {
-            text-align: center;
-            margin-bottom: 10px;
-            color: #ffcc00;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-        
-        .subtitle {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #ddd;
-        }
-        
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.9);
-            font-size: 16px;
-        }
-        
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            background: #ffcc00;
-            color: #1a2a6c;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
-        
-        button:hover {
-            background: #ffd633;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 20px 0;
-        }
-        
-        .divider::before, .divider::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.3);
-        }
-        
-        .divider span {
-            padding: 0 15px;
-            color: #ddd;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .timer {
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 20px 0;
-            color: #ffcc00;
-        }
-        
-        .word-display {
-            text-align: center;
-            font-size: 32px;
-            font-weight: bold;
-            margin: 30px 0;
-            color: #ffcc00;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-        
-        .imposter-alert {
-            text-align: center;
-            background: rgba(255, 0, 0, 0.2);
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #ff0000;
-            margin: 20px 0;
-        }
-        
-        .player-list {
-            margin-top: 20px;
-        }
-        
-        .player {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .player-name {
-            font-weight: 500;
-        }
-        
-        .player-role {
-            color: #ffcc00;
-            font-weight: bold;
-        }
-        
-        .success {
-            background: rgba(0, 255, 0, 0.2);
-            border: 2px solid #00ff00;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .error {
-            background: rgba(255, 0, 0, 0.2);
-            border: 2px solid #ff0000;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .logo {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .logo span {
-            font-size: 3rem;
-            display: inline-block;
-            transform: rotate(10deg);
-            text-shadow: 3px 3px 0 #b21f1f;
-        }
-        
-        .room-code-display {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: bold;
-            letter-spacing: 5px;
-            color: #ffcc00;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-        
-        .copy-btn {
-            background: #4CAF50;
-            margin-top: 5px;
-            font-size: 14px;
-            padding: 8px;
-        }
-        
-        .copy-btn:hover {
-            background: #45a049;
-        }
-        
-        .status-message {
-            text-align: center;
-            font-style: italic;
-            color: #ffcc00;
-            margin: 10px 0;
-        }
-        
-        #votingPage .player-list button {
-            background: #4CAF50;
-            margin-bottom: 10px;
-        }
-        #votingPage .player-list button:hover {
-            background: #45a049;
-        }
-        
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="logo">
-            <span>🕵️</span>
-        </div>
-        <h1>Word Imposter</h1>
-        <p class="subtitle">A social deduction game where you need to find the imposter!</p>
-        
-        <div id="landingPage">
-            <div class="card">
-                <div class="form-group">
-                    <label for="playerName">Your Name</label>
-                    <input type="text" id="playerName" placeholder="Enter your name">
-                </div>
-                
-                <button id="createRoomBtn">Create Room</button>
-                
-                <div class="divider">
-                    <span>Or</span>
-                </div>
-                
-                <div class="form-group">
-                    <label for="roomCode">Room Code</label>
-                    <input type="text" id="roomCode" placeholder="Enter room code">
-                </div>
-                
-                <button id="joinRoomBtn">Join Room</button>
-            </div>
-        </div>
-        
-        <div id="createRoomPage" class="hidden">
-            <div class="card">
-                <h2>Create Room</h2>
-                
-                <div class="form-group">
-                    <label for="hostName">Your Name</label>
-                    <input type="text" id="hostName" placeholder="Enter your name">
-                </div>
-                
-                <div class="form-group">
-                    <label for="playerCount">Number of Players</label>
-                    <select id="playerCount">
-                        <option value="4">4 Players</option>
-                        <option value="5">5 Players</option>
-                        <option value="6">6 Players</option>
-                        <option value="7">7 Players</option>
-                        <option value="8">8 Players</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="imposterCount">Number of Imposters</label>
-                    <select id="imposterCount">
-                        <option value="1">1 Imposter</option>
-                        <option value="2">2 Imposters</option>
-                    </select>
-                </div>
-                
-                <button id="createRoomSubmit">Create Room</button>
-                <button id="backToLanding">Back</button>
-            </div>
-        </div>
-        
-        <div id="joinRoomPage" class="hidden">
-            <div class="card">
-                <h2>Join Room</h2>
-                
-                <div class="form-group">
-                    <label for="joinPlayerName">Your Name</label>
-                    <input type="text" id="joinPlayerName" placeholder="Enter your name">
-                </div>
-                
-                <div class="form-group">
-                    <label for="joinRoomCode">Room Code</label>
-                    <input type="text" id="joinRoomCode" placeholder="Enter room code">
-                </div>
-                
-                <button id="joinRoomSubmit">Join Room</button>
-                <button id="backToLanding2">Back</button>
-            </div>
-        </div>
-        
-        <div id="lobbyPage" class="hidden">
-            <div class="card">
-                <h2>Room Lobby</h2>
-                
-                <div class="room-code-display" id="roomCodeDisplay">ABCD12</div>
-                <button class="copy-btn" id="copyRoomCode">Copy Code</button>
-                <p class="status-message">Share this code with other players to join</p>
-                
-                <div class="form-group">
-                    <label>Players in Room:</label>
-                    <div id="playersList" class="player-list">
-                        </div>
-                </div>
-                
-                <div id="lobbyStatus" class="status-message">Waiting for players to join...</div>
-                
-                <button id="startGameBtn" class="hidden">Start Game</button>
-                <button id="leaveLobbyBtn">Leave Lobby</button>
-            </div>
-        </div>
-        
-        <div id="wordInputPage" class="hidden">
-            <div class="card">
-                <h2>Enter a Word</h2>
-                <p>You have <span id="timeLeft">30</span> seconds to submit your word</p>
-                
-                <div class="form-group">
-                    <textarea id="wordInput" placeholder="Enter your word here..." rows="3"></textarea>
-                </div>
-                
-                <button id="submitWordBtn">Submit Word</button>
-                
-                <div class="player-list">
-                    <h3>Players in Room:</h3>
-                    <div id="wordInputPlayers">
-                        </div>
-                </div>
-            </div>
-        </div>
-        
-        <div id="gamePage" class="hidden">
-            <div class="card">
-                <h2>Word Imposter</h2>
-                
-                <div id="imposterView" class="imposter-alert hidden">
-                    <h3>You are the Imposter!</h3>
-                    <p>Try to blend in and guess the word without revealing yourself.</p>
-                </div>
-                
-                <div id="crewView" class="hidden">
-                    <p>The secret word is:</p>
-                    <div class="word-display" id="secretWordDisplay"></div>
-                    <p>Discuss this word without saying it directly!</p>
-                </div>
-                
-                <div class="timer" id="gameTimer"></div>
-                
-                <div class="player-list">
-                    <h3>Players:</h3>
-                    <div id="gamePlayers">
-                        </div>
-                </div>
-                
-                <button id="startVotingBtn">Proceed to Voting</button>
-            </div>
-        </div>
-        
-        <div id="votingPage" class="hidden">
-            <div class="card">
-                <h2>Voting</h2>
-                <p>Who do you think is the imposter?</p>
-                
-                <div class="player-list" id="votingButtons">
-                    </div>
-            </div>
-        </div>
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const { Server } = require('socket.io');
 
-        <div id="resultPage" class="hidden">
-            <div class="card">
-                <h2>Game Over</h2>
-                <div id="resultMessage" class="success"></div>
-                <div class="player-list">
-                    <h3>Roles:</h3>
-                    <div id="finalRoles"></div>
-                </div>
-                <button id="playAgainBtn">Play Again</button>
-            </div>
-        </div>
-    </div>
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-    <script>
-        // DOM Elements
-        const landingPage = document.getElementById('landingPage');
-        const createRoomPage = document.getElementById('createRoomPage');
-        const joinRoomPage = document.getElementById('joinRoomPage');
-        const lobbyPage = document.getElementById('lobbyPage');
-        const wordInputPage = document.getElementById('wordInputPage');
-        const gamePage = document.getElementById('gamePage');
-        const votingPage = document.getElementById('votingPage');
-        const resultPage = document.getElementById('resultPage');
-        
-        const playerNameInput = document.getElementById('playerName');
-        const roomCodeInput = document.getElementById('roomCode');
-        const hostNameInput = document.getElementById('hostName');
-        const joinPlayerNameInput = document.getElementById('joinPlayerName');
-        const joinRoomCodeInput = document.getElementById('joinRoomCode');
-        const wordInput = document.getElementById('wordInput');
-        const timeLeftDisplay = document.getElementById('timeLeft');
-        const roomCodeDisplay = document.getElementById('roomCodeDisplay');
-        const playersList = document.getElementById('playersList');
-        const wordInputPlayers = document.getElementById('wordInputPlayers');
-        const gamePlayers = document.getElementById('gamePlayers');
-        const secretWordDisplay = document.getElementById('secretWordDisplay');
-        const startGameBtn = document.getElementById('startGameBtn');
-        const lobbyStatus = document.getElementById('lobbyStatus');
-        const gameTimerDisplay = document.getElementById('gameTimer');
-        const votingButtonsDiv = document.getElementById('votingButtons');
-        const resultMessageDiv = document.getElementById('resultMessage');
-        const finalRolesDiv = document.getElementById('finalRoles');
-        
-        // Buttons
-        const createRoomBtn = document.getElementById('createRoomBtn');
-        const joinRoomBtn = document.getElementById('joinRoomBtn');
-        const createRoomSubmit = document.getElementById('createRoomSubmit');
-        const joinRoomSubmit = document.getElementById('joinRoomSubmit');
-        const backToLanding = document.getElementById('backToLanding');
-        const backToLanding2 = document.getElementById('backToLanding2');
-        const submitWordBtn = document.getElementById('submitWordBtn');
-        const startVotingBtn = document.getElementById('startVotingBtn');
-        const leaveLobbyBtn = document.getElementById('leaveLobbyBtn');
-        const copyRoomCode = document.getElementById('copyRoomCode');
-        const playAgainBtn = document.getElementById('playAgainBtn');
-        
-        // Game state
-        let timer;
-        let wordSubmitTimer;
-        let gameDiscussionTimer;
-        let timeLeft = 30;
-        let gameTime = 120; // 2 minutes for discussion
-        let gameState = {
-            roomCode: '',
-            playerName: '',
-            isHost: false,
-            players: [],
-            imposterCount: 1,
-            playerCount: 4,
-            isImposter: false,
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Store game rooms and their state
+const rooms = {};
+
+io.on('connection', (socket) => {
+    console.log(`A user connected: ${socket.id}`);
+
+    // --- Room Creation & Joining ---
+    socket.on('createRoom', ({ playerName, playerCount, imposterCount }) => {
+        const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        rooms[roomCode] = {
+            players: [{ id: socket.id, name: playerName, isHost: true }],
+            settings: { playerCount, imposterCount },
+            gameStarted: false,
+            submittedWords: [],
             secretWord: '',
-            imposterId: '',
-            submittedWords: []
+            imposters: [],
+            votes: {},
+            votedPlayersCount: 0
         };
-        
-        const allPages = [
-            landingPage,
-            createRoomPage,
-            joinRoomPage,
-            lobbyPage,
-            wordInputPage,
-            gamePage,
-            votingPage,
-            resultPage
-        ];
-        
-        function showPage(pageToShow) {
-            allPages.forEach(page => page.classList.add('hidden'));
-            pageToShow.classList.remove('hidden');
-        }
-        
-        function generateRoomCode() {
-            return Math.random().toString(36).substring(2, 8).toUpperCase();
-        }
-        
-        function updatePlayersList() {
-            playersList.innerHTML = '';
-            wordInputPlayers.innerHTML = '';
-            gamePlayers.innerHTML = '';
-            
-            gameState.players.forEach(player => {
-                const li = document.createElement('div');
-                li.className = 'player';
-                li.innerHTML = `<span class="player-name">${player.name}</span>`;
-                if (player.isHost) {
-                    li.innerHTML += `<span class="player-role">(Host)</span>`;
-                }
-                playersList.appendChild(li);
-                wordInputPlayers.appendChild(li.cloneNode(true));
-                gamePlayers.appendChild(li.cloneNode(true));
-            });
-        }
-        
-        function startWordInput() {
-            showPage(wordInputPage);
-            timeLeft = 30;
-            timeLeftDisplay.textContent = timeLeft;
-            wordInput.value = '';
-            
-            wordSubmitTimer = setInterval(() => {
-                timeLeft--;
-                timeLeftDisplay.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(wordSubmitTimer);
-                    // Force start game if timer runs out
-                    submitWordBtn.click();
-                }
-            }, 1000);
-            updatePlayersList();
-        }
-        
-        function startGame() {
-            // Randomly select one player to be the imposter
-            const imposterIndex = Math.floor(Math.random() * gameState.players.length);
-            gameState.imposterId = gameState.players[imposterIndex].id;
-            
-            // Assign roles
-            gameState.players.forEach(player => {
-                player.isImposter = (player.id === gameState.imposterId);
-            });
-            
-            // Randomly select one word from the submitted words
-            const allWords = gameState.submittedWords.map(p => p.word);
-            const commonWord = allWords[Math.floor(Math.random() * allWords.length)];
-            gameState.secretWord = commonWord;
-            
-            // Show the game page
-            showPage(gamePage);
-            
-            // Display word or imposter message based on player role
-            if (gameState.imposterId === gameState.players.find(p => p.name === gameState.playerName).id) {
-                // Current player is the imposter
-                document.getElementById('imposterView').classList.remove('hidden');
-                document.getElementById('crewView').classList.add('hidden');
+        socket.join(roomCode);
+        socket.emit('roomCreated', roomCode);
+        io.to(roomCode).emit('playerListUpdate', rooms[roomCode].players);
+    });
+
+    socket.on('joinRoom', ({ roomCode, playerName }) => {
+        const room = rooms[roomCode];
+        if (room && !room.gameStarted) {
+            if (room.players.length < room.settings.playerCount) {
+                room.players.push({ id: socket.id, name: playerName, isHost: false });
+                socket.join(roomCode);
+                io.to(roomCode).emit('playerListUpdate', room.players);
             } else {
-                // Current player is a crewmate
-                document.getElementById('imposterView').classList.add('hidden');
-                document.getElementById('crewView').classList.remove('hidden');
-                secretWordDisplay.textContent = gameState.secretWord;
+                socket.emit('error', 'Room is full.');
             }
-            
-            // Start the discussion timer
-            gameTime = 120; // 2 minutes
-            gameTimerDisplay.textContent = '02:00';
-            gameDiscussionTimer = setInterval(() => {
-                gameTime--;
-                const minutes = Math.floor(gameTime / 60);
-                const seconds = gameTime % 60;
-                gameTimerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
-                if (gameTime <= 0) {
-                    clearInterval(gameDiscussionTimer);
-                    startVotingBtn.click();
-                }
-            }, 1000);
+        } else {
+            socket.emit('error', 'Room not found or game has started.');
         }
-        
-        function startVoting() {
-            showPage(votingPage);
-            votingButtonsDiv.innerHTML = '';
-            
-            gameState.players.forEach(player => {
-                // Don't let a player vote for themselves in this simple example
-                // In a real game, you would use their socket ID
-                if (player.name !== gameState.playerName) {
-                    const button = document.createElement('button');
-                    button.textContent = `Vote for ${player.name}`;
-                    button.addEventListener('click', () => {
-                        handleVote(player.id);
+    });
+
+    // --- Game Logic ---
+    socket.on('startGame', () => {
+        const roomCode = [...socket.rooms].find(room => room !== socket.id);
+        const room = rooms[roomCode];
+        if (room && room.players.length >= 3 && !room.gameStarted) {
+            room.gameStarted = true;
+            io.to(roomCode).emit('startWordInputPhase');
+        } else {
+            socket.emit('error', 'Not enough players to start the game.');
+        }
+    });
+
+    socket.on('submitWord', (word) => {
+        const roomCode = [...socket.rooms].find(room => room !== socket.id);
+        const room = rooms[roomCode];
+        if (room && room.gameStarted) {
+            room.submittedWords.push({ id: socket.id, word });
+            // Let everyone know a word has been submitted
+            io.to(roomCode).emit('wordSubmitted', room.submittedWords.length);
+
+            if (room.submittedWords.length === room.players.length) {
+                // All words are in, start the game
+                const allWords = room.submittedWords.map(p => p.word);
+                const secretWord = allWords[Math.floor(Math.random() * allWords.length)];
+                room.secretWord = secretWord;
+
+                // Select imposters
+                const playersToAssign = [...room.players];
+                const imposters = playersToAssign
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, room.settings.imposterCount);
+                room.imposters = imposters.map(p => p.id);
+
+                room.players.forEach(player => {
+                    const isImposter = room.imposters.includes(player.id);
+                    io.to(player.id).emit('startDiscussionPhase', {
+                        isImposter,
+                        word: isImposter ? null : secretWord,
+                        players: room.players.map(p => ({ id: p.id, name: p.name }))
                     });
-                    votingButtonsDiv.appendChild(button);
-                }
-            });
-        }
-        
-        function handleVote(votedPlayerId) {
-            // This is a simplified voting system for a single-player demo
-            // In a real game, this would send the vote to the server
-            // and the server would tally all votes.
-            const votedPlayer = gameState.players.find(p => p.id === votedPlayerId);
-            
-            let message = '';
-            if (votedPlayer.isImposter) {
-                message = `You voted correctly! The imposter was ${votedPlayer.name}. Crewmates win!`;
-                resultMessageDiv.className = 'success';
-            } else {
-                message = `You voted for a crewmate! The imposter was ${gameState.players.find(p => p.isImposter).name}. Imposter wins!`;
-                resultMessageDiv.className = 'error';
-            }
-            
-            // Show result page
-            showResult(message);
-        }
-        
-        function showResult(message) {
-            showPage(resultPage);
-            resultMessageDiv.textContent = message;
-            finalRolesDiv.innerHTML = '';
-            
-            gameState.players.forEach(player => {
-                const div = document.createElement('div');
-                div.className = 'player';
-                const role = player.isImposter ? 'Imposter' : 'Crewmate';
-                div.innerHTML = `<span class="player-name">${player.name}</span><span class="player-role">${role}</span>`;
-                finalRolesDiv.appendChild(div);
-            });
-        }
-        
-        // Event Listeners
-        createRoomBtn.addEventListener('click', () => {
-            if (!playerNameInput.value.trim()) {
-                alert('Please enter your name');
-                return;
-            }
-            hostNameInput.value = playerNameInput.value;
-            showPage(createRoomPage);
-        });
-        
-        joinRoomBtn.addEventListener('click', () => {
-            if (!playerNameInput.value.trim()) {
-                alert('Please enter your name');
-                return;
-            }
-            if (!roomCodeInput.value.trim()) {
-                alert('Please enter a room code');
-                return;
-            }
-            joinPlayerNameInput.value = playerNameInput.value;
-            joinRoomCodeInput.value = roomCodeInput.value;
-            showPage(joinRoomPage);
-        });
-        
-        backToLanding.addEventListener('click', () => showPage(landingPage));
-        backToLanding2.addEventListener('click', () => showPage(landingPage));
-        
-        createRoomSubmit.addEventListener('click', () => {
-            if (!hostNameInput.value.trim()) {
-                alert('Please enter your name');
-                return;
-            }
-            gameState.roomCode = generateRoomCode();
-            gameState.playerName = hostNameInput.value;
-            gameState.isHost = true;
-            gameState.playerCount = parseInt(document.getElementById('playerCount').value);
-            gameState.imposterCount = parseInt(document.getElementById('imposterCount').value);
-            
-            gameState.players = [{
-                id: 'host' + Date.now(),
-                name: gameState.playerName,
-                isHost: true
-            }];
-            
-            roomCodeDisplay.textContent = gameState.roomCode;
-            updatePlayersList();
-            lobbyStatus.textContent = `Waiting for players (${gameState.players.length}/${gameState.playerCount})`;
-            startGameBtn.classList.remove('hidden');
-            
-            showPage(lobbyPage);
-            
-            // Simulate other players joining for the demo
-            setTimeout(() => {
-                if (gameState.players.length < gameState.playerCount) {
-                    gameState.players.push({ id: 'player2', name: 'Player 2' });
-                    updatePlayersList();
-                    lobbyStatus.textContent = `Waiting for players (${gameState.players.length}/${gameState.playerCount})`;
-                }
-            }, 2000);
-            setTimeout(() => {
-                if (gameState.players.length < gameState.playerCount) {
-                    gameState.players.push({ id: 'player3', name: 'Player 3' });
-                    updatePlayersList();
-                    lobbyStatus.textContent = `Waiting for players (${gameState.players.length}/${gameState.playerCount})`;
-                }
-            }, 4000);
-        });
-        
-        joinRoomSubmit.addEventListener('click', () => {
-            if (!joinPlayerNameInput.value.trim() || !joinRoomCodeInput.value.trim()) {
-                alert('Please fill out all fields');
-                return;
-            }
-            
-            gameState.roomCode = joinRoomCodeInput.value;
-            gameState.playerName = joinPlayerNameInput.value;
-            gameState.isHost = false;
-            
-            // For this demo, assume the room exists and a host is present
-            // We'll add this player to the list
-            gameState.players.push({ id: 'player' + Date.now(), name: gameState.playerName, isHost: false });
-            
-            // Simulate getting the full player list from the host
-            // In a real app, this would be a server-side event
-            const dummyPlayers = [{ id: 'host123', name: 'Host', isHost: true }];
-            gameState.players = [...dummyPlayers, ...gameState.players];
-            
-            roomCodeDisplay.textContent = gameState.roomCode;
-            updatePlayersList();
-            lobbyStatus.textContent = `Waiting for host to start the game.`;
-            
-            showPage(lobbyPage);
-        });
-        
-        copyRoomCode.addEventListener('click', () => {
-            navigator.clipboard.writeText(gameState.roomCode)
-                .then(() => {
-                    const originalText = copyRoomCode.textContent;
-                    copyRoomCode.textContent = 'Copied!';
-                    setTimeout(() => {
-                        copyRoomCode.textContent = originalText;
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error('Could not copy text: ', err);
                 });
-        });
-        
-        startGameBtn.addEventListener('click', () => {
-            if (gameState.isHost && gameState.players.length >= 3) {
-                startWordInput();
-            } else {
-                alert('Need at least 3 players to start!');
             }
-        });
-        
-        submitWordBtn.addEventListener('click', () => {
-            const submittedWord = wordInput.value.trim();
-            if (!submittedWord) {
-                alert('Please enter a word');
-                return;
-            }
-            
-            clearInterval(wordSubmitTimer);
-            gameState.submittedWords.push({
-                id: gameState.players.find(p => p.name === gameState.playerName).id,
-                word: submittedWord
-            });
-            
-            // In a real app, this would be a server check
-            // For this demo, we'll assume the host has collected all words
-            // and starts the game
-            if (gameState.isHost) {
-                 // Simulate other players submitting words
-                for(let i=1; i < gameState.players.length; i++) {
-                    gameState.submittedWords.push({
-                        id: gameState.players[i].id,
-                        word: `word${i}`
-                    });
+        }
+    });
+
+    socket.on('vote', ({ votedPlayerId }) => {
+        const roomCode = [...socket.rooms].find(room => room !== socket.id);
+        const room = rooms[roomCode];
+        if (room) {
+            if (!room.votes[socket.id]) { // Check if the player has already voted
+                room.votes[socket.id] = votedPlayerId;
+                room.votedPlayersCount++;
+
+                // Check if all players have voted
+                if (room.votedPlayersCount === room.players.length) {
+                    const voteTally = {};
+                    for (const voterId in room.votes) {
+                        const votedOnId = room.votes[voterId];
+                        voteTally[votedOnId] = (voteTally[votedOnId] || 0) + 1;
+                    }
+
+                    let mostVotedPlayerId = null;
+                    let maxVotes = 0;
+                    for (const id in voteTally) {
+                        if (voteTally[id] > maxVotes) {
+                            maxVotes = voteTally[id];
+                            mostVotedPlayerId = id;
+                        }
+                    }
+
+                    const mostVotedPlayer = room.players.find(p => p.id === mostVotedPlayerId);
+                    let resultMessage;
+                    let crewmatesWin;
+
+                    if (room.imposters.includes(mostVotedPlayerId)) {
+                        resultMessage = `${mostVotedPlayer.name} was an imposter! Crewmates win!`;
+                        crewmatesWin = true;
+                    } else {
+                        resultMessage = `${mostVotedPlayer.name} was a crewmate. The imposter was not caught! Imposters win!`;
+                        crewmatesWin = false;
+                    }
+                    
+                    const finalRoles = room.players.map(p => ({
+                        name: p.name,
+                        isImposter: room.imposters.includes(p.id)
+                    }));
+
+                    io.to(roomCode).emit('gameOver', { message: resultMessage, roles: finalRoles, crewmatesWin });
                 }
-                startGame();
-            } else {
-                // Non-host player would just wait for a message from the server
-                // For this demo, we can just move to a waiting screen
-                lobbyStatus.textContent = 'Waiting for all players to submit words...';
-                showPage(lobbyPage);
             }
-        });
-        
-        startVotingBtn.addEventListener('click', () => {
-            clearInterval(gameDiscussionTimer);
-            startVoting();
-        });
-        
-        playAgainBtn.addEventListener('click', () => {
-            // Reset game state and return to landing page
-            gameState = {
-                roomCode: '',
-                playerName: '',
-                isHost: false,
-                players: [],
-                imposterCount: 1,
-                playerCount: 4,
-                isImposter: false,
-                secretWord: '',
-                imposterId: '',
-                submittedWords: []
-            };
-            showPage(landingPage);
-        });
-        
-        leaveLobbyBtn.addEventListener('click', () => {
-            // Reset game state and return to landing page
-            gameState = {
-                roomCode: '',
-                playerName: '',
-                isHost: false,
-                players: [],
-                imposterCount: 1,
-                playerCount: 4,
-                isImposter: false,
-                secretWord: '',
-                imposterId: '',
-                submittedWords: []
-            };
-            showPage(landingPage);
-        });
-        
-        // Initial page load
-        showPage(landingPage);
-    </script>
-</body>
-</html>
+        }
+    });
+
+    // --- Disconnection Handling ---
+    socket.on('disconnect', () => {
+        console.log(`User disconnected: ${socket.id}`);
+        for (const roomCode in rooms) {
+            const room = rooms[roomCode];
+            const playerIndex = room.players.findIndex(p => p.id === socket.id);
+            if (playerIndex !== -1) {
+                room.players.splice(playerIndex, 1);
+                if (room.players.length === 0) {
+                    delete rooms[roomCode];
+                } else {
+                    io.to(roomCode).emit('playerListUpdate', room.players);
+                }
+                break;
+            }
+        }
+    });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
