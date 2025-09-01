@@ -52,6 +52,13 @@
             color: #fff;
         }
 
+        h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #FFE05D;
+        }
+
         p {
             margin-bottom: 20px;
             text-align: center;
@@ -122,14 +129,19 @@
             font-weight: bold;
         }
 
-        input, select {
+        input, select, textarea {
             width: 100%;
             padding: 15px;
-            border-radius: 50px;
+            border-radius: 15px;
             border: 2px solid #FF9642;
             font-size: 1rem;
             background: rgba(255, 255, 255, 0.9);
             font-family: 'Nunito', sans-serif;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
         }
 
         .player-count {
@@ -203,6 +215,10 @@
             content: "🎭";
         }
 
+        .player-list li.host:before {
+            content: "👑";
+        }
+
         .word-input {
             font-size: 1.5rem;
             height: 70px;
@@ -273,6 +289,19 @@
             margin: 20px 0;
         }
 
+        .word-entry {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+        }
+
+        .player-name {
+            font-weight: bold;
+            color: #FFE05D;
+            margin-bottom: 5px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -295,6 +324,18 @@
             font-size: 3.5rem;
             margin-bottom: 10px;
             text-align: center;
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            color: #FFE05D;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -366,26 +407,38 @@
             
             <h2>Players</h2>
             <ul class="player-list" id="player-list">
-                <li>Player 1 (Host)</li>
-                <li>Player 2</li>
+                <li class="host">Player 1 (Host)</li>
             </ul>
             
             <button class="btn btn-success" id="start-game-btn" onclick="startGame()">Start Game</button>
             <button class="btn btn-danger" onclick="leaveRoom()">Leave Room</button>
         </div>
 
-        <!-- Game Screen -->
-        <div class="screen" id="game-screen">
-            <h1>Your Word</h1>
-            <div class="word-reveal" id="player-word">BANANA</div>
-            <p id="imposter-message">You are the imposter! Try to guess what word others might be seeing.</p>
-            
-            <div class="input-group">
-                <label>Enter a related word</label>
-                <input type="text" class="word-input" id="word-input" placeholder="Type a word that relates">
+        <!-- Word Entry Screen -->
+        <div class="screen" id="word-entry-screen">
+            <h1>Enter Your Word</h1>
+            <div class="instructions">
+                <p>Please enter a word or phrase that relates to the secret word.</p>
+                <p class="highlight">Imposters: Try to guess what the secret word might be!</p>
             </div>
             
-            <button class="btn btn-success" onclick="submitWord()">Submit</button>
+            <div class="input-group">
+                <textarea id="player-word-input" placeholder="Type your word or phrase here..."></textarea>
+            </div>
+            
+            <button class="btn btn-success" onclick="submitWord()">Submit Word</button>
+        </div>
+
+        <!-- Words Display Screen -->
+        <div class="screen" id="words-display-screen">
+            <h1>All Submitted Words</h1>
+            <p>Here are all the words players submitted. Try to identify the imposter!</p>
+            
+            <div id="submitted-words-list">
+                <!-- Words will be displayed here -->
+            </div>
+            
+            <button class="btn" onclick="showScreen('discussion-screen')">Start Discussion</button>
         </div>
 
         <!-- Discussion Screen -->
@@ -399,6 +452,11 @@
                 <div class="message">Player 3: Mine is a fruit</div>
             </div>
             
+            <div class="input-group">
+                <input type="text" id="chat-input" placeholder="Type your message...">
+            </div>
+            
+            <button class="btn" onclick="sendMessage()">Send Message</button>
             <button class="btn" onclick="showScreen('voting-screen')">Start Voting</button>
         </div>
 
@@ -407,12 +465,8 @@
             <h1>Vote for Imposter</h1>
             <p>Who do you think is the imposter?</p>
             
-            <div class="vote-options">
-                <button class="vote-btn" onclick="castVote('Player 1')">Player 1</button>
-                <button class="vote-btn" onclick="castVote('Player 2')">Player 2</button>
-                <button class="vote-btn" onclick="castVote('Player 3')">Player 3</button>
-                <button class="vote-btn" onclick="castVote('Player 4')">Player 4</button>
-                <button class="vote-btn" onclick="castVote('Player 5')">Player 5</button>
+            <div class="vote-options" id="vote-options">
+                <!-- Voting options will be added here -->
             </div>
         </div>
 
@@ -423,12 +477,12 @@
             <div class="result-container">
                 <div class="role-badge" id="player-role">Normal Player</div>
                 <p>The secret word was:</p>
-                <div class="word-reveal">BANANA</div>
+                <div class="word-reveal" id="secret-word-reveal">BANANA</div>
             </div>
             
             <h2>Imposters were:</h2>
-            <ul class="player-list">
-                <li class="imposter">Player 3</li>
+            <ul class="player-list" id="imposters-list">
+                <!-- Imposters will be listed here -->
             </ul>
             
             <button class="btn" onclick="playAgain()">Play Again</button>
@@ -437,6 +491,19 @@
     </div>
 
     <script>
+        // Game state
+        const gameState = {
+            roomCode: '',
+            players: [],
+            currentPlayer: '',
+            isHost: false,
+            isImposter: false,
+            secretWord: '',
+            imposterCount: 1,
+            submittedWords: [],
+            votes: {}
+        };
+
         // Current screen management
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
@@ -463,8 +530,20 @@
             }
             
             // Generate a random room code
-            const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-            document.getElementById('room-code-display').textContent = roomCode;
+            gameState.roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+            gameState.secretWord = secretWord;
+            gameState.imposterCount = parseInt(imposterCount);
+            gameState.isHost = true;
+            
+            // Add host as first player
+            const playerName = "Player 1 (Host)";
+            gameState.players = [playerName];
+            gameState.currentPlayer = playerName;
+            
+            document.getElementById('room-code-display').textContent = gameState.roomCode;
+            
+            // Update player list
+            updatePlayerList();
             
             showScreen('lobby-screen');
         }
@@ -485,13 +564,14 @@
             }
             
             // In a real app, you would validate the room code with the server
-            document.getElementById('room-code-display').textContent = roomCode;
+            gameState.roomCode = roomCode.toUpperCase();
+            gameState.currentPlayer = playerName;
+            gameState.players.push(playerName);
             
-            // Add the player to the list
-            const playerList = document.getElementById('player-list');
-            const newPlayer = document.createElement('li');
-            newPlayer.textContent = playerName;
-            playerList.appendChild(newPlayer);
+            document.getElementById('room-code-display').textContent = gameState.roomCode;
+            
+            // Update player list
+            updatePlayerList();
             
             // Disable start button for non-host players
             document.getElementById('start-game-btn').style.display = 'none';
@@ -499,49 +579,248 @@
             showScreen('lobby-screen');
         }
 
+        // Update player list in the lobby
+        function updatePlayerList() {
+            const playerList = document.getElementById('player-list');
+            playerList.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                const listItem = document.createElement('li');
+                if (player.includes("(Host)")) {
+                    listItem.classList.add('host');
+                }
+                listItem.textContent = player;
+                playerList.appendChild(listItem);
+            });
+        }
+
         // Start the game
         function startGame() {
             // Randomly assign roles (in a real app, this would be done server-side)
-            const isImposter = Math.random() > 0.7; // 30% chance of being imposter
+            assignRoles();
             
-            if (isImposter) {
-                document.getElementById('player-word').textContent = '???';
-                document.getElementById('imposter-message').style.display = 'block';
-            } else {
-                document.getElementById('player-word').textContent = 'BANANA'; // This would be the actual secret word
-                document.getElementById('imposter-message').style.display = 'none';
+            // Move to word entry screen
+            showScreen('word-entry-screen');
+        }
+
+        // Assign roles to players
+        function assignRoles() {
+            // Reset roles
+            gameState.isImposter = false;
+            
+            // Randomly select imposters
+            const imposterIndices = [];
+            const playerCount = gameState.players.length;
+            
+            while (imposterIndices.length < gameState.imposterCount) {
+                const randomIndex = Math.floor(Math.random() * playerCount);
+                if (!imposterIndices.includes(randomIndex)) {
+                    imposterIndices.push(randomIndex);
+                }
             }
             
-            showScreen('game-screen');
+            // Check if current player is an imposter
+            const currentPlayerIndex = gameState.players.indexOf(gameState.currentPlayer);
+            gameState.isImposter = imposterIndices.includes(currentPlayerIndex);
+            
+            // Set up the secret word display
+            if (gameState.isImposter) {
+                document.getElementById('player-word-input').placeholder = "You're the IMPOSTER! Try to guess what word others might be seeing...";
+            }
         }
 
         // Submit word
         function submitWord() {
-            const word = document.getElementById('word-input').value;
+            const word = document.getElementById('player-word-input').value;
             if (!word) {
-                alert('Please enter a word!');
+                alert('Please enter a word or phrase!');
                 return;
             }
             
-            showScreen('discussion-screen');
+            // Add to submitted words
+            gameState.submittedWords.push({
+                player: gameState.currentPlayer,
+                word: word,
+                isImposter: gameState.isImposter
+            });
+            
+            // In a real app, this would be sent to the server and we'd wait for all players
+            // For this demo, we'll simulate all players submitting words
+            simulateOtherPlayersSubmitting();
+            
+            // Show all submitted words
+            showSubmittedWords();
+            
+            showScreen('words-display-screen');
+        }
+
+        // Simulate other players submitting words (for demo purposes)
+        function simulateOtherPlayersSubmitting() {
+            const sampleWords = [
+                "Yellow", "Fruit", "Tropical", "Sweet", "Long", "Curved",
+                "Monkey", "Smoothie", "Vitamin C", "Plantain", "Peel", "Bunch"
+            ];
+            
+            gameState.players.forEach(player => {
+                if (player !== gameState.currentPlayer) {
+                    // Check if this player is an imposter (random for demo)
+                    const isImposter = Math.random() < 0.3;
+                    
+                    let word;
+                    if (isImposter) {
+                        // Imposters might guess wrong
+                        const randomWords = ["Apple", "Orange", "Car", "Book", "Computer", "Phone"];
+                        word = randomWords[Math.floor(Math.random() * randomWords.length)];
+                    } else {
+                        // Regular players use words related to banana
+                        word = sampleWords[Math.floor(Math.random() * sampleWords.length)];
+                    }
+                    
+                    gameState.submittedWords.push({
+                        player: player,
+                        word: word,
+                        isImposter: isImposter
+                    });
+                }
+            });
+            
+            // Shuffle the words to make it random
+            gameState.submittedWords = gameState.submittedWords.sort(() => Math.random() - 0.5);
+        }
+
+        // Display all submitted words
+        function showSubmittedWords() {
+            const wordsList = document.getElementById('submitted-words-list');
+            wordsList.innerHTML = '';
+            
+            gameState.submittedWords.forEach(item => {
+                const wordEntry = document.createElement('div');
+                wordEntry.classList.add('word-entry');
+                
+                const playerName = document.createElement('div');
+                playerName.classList.add('player-name');
+                playerName.textContent = item.player;
+                
+                const word = document.createElement('div');
+                word.textContent = item.word;
+                
+                wordEntry.appendChild(playerName);
+                wordEntry.appendChild(word);
+                wordsList.appendChild(wordEntry);
+            });
+        }
+
+        // Set up voting options
+        function setupVoting() {
+            const voteOptions = document.getElementById('vote-options');
+            voteOptions.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                const voteBtn = document.createElement('button');
+                voteBtn.classList.add('vote-btn');
+                voteBtn.textContent = player;
+                voteBtn.onclick = () => castVote(player);
+                voteOptions.appendChild(voteBtn);
+            });
         }
 
         // Cast vote
         function castVote(player) {
+            // Record the vote
+            gameState.votes[gameState.currentPlayer] = player;
+            
+            // In a real app, this would be sent to the server
+            // For demo, we'll simulate other players voting
+            simulateOtherPlayersVoting();
+            
+            // Show results
+            showResults();
+            
             showScreen('results-screen');
+        }
+
+        // Simulate other players voting (for demo purposes)
+        function simulateOtherPlayersVoting() {
+            gameState.players.forEach(player => {
+                if (player !== gameState.currentPlayer) {
+                    // Random vote for demo
+                    const randomPlayer = gameState.players[Math.floor(Math.random() * gameState.players.length)];
+                    gameState.votes[player] = randomPlayer;
+                }
+            });
+        }
+
+        // Show game results
+        function showResults() {
+            // Set player role badge
+            const roleBadge = document.getElementById('player-role');
+            roleBadge.textContent = gameState.isImposter ? "IMPOSTER" : "Normal Player";
+            if (gameState.isImposter) {
+                roleBadge.classList.add('imposter-badge');
+            }
+            
+            // Reveal secret word
+            document.getElementById('secret-word-reveal').textContent = gameState.secretWord;
+            
+            // List imposters
+            const impostersList = document.getElementById('imposters-list');
+            impostersList.innerHTML = '';
+            
+            gameState.submittedWords.forEach(item => {
+                if (item.isImposter) {
+                    const imposterItem = document.createElement('li');
+                    imposterItem.classList.add('imposter');
+                    imposterItem.textContent = item.player;
+                    impostersList.appendChild(imposterItem);
+                }
+            });
             
             // Animate confetti if the player guessed correctly
             createConfetti();
         }
 
+        // Send chat message
+        function sendMessage() {
+            const messageInput = document.getElementById('chat-input');
+            const message = messageInput.value;
+            
+            if (!message) return;
+            
+            const chat = document.getElementById('discussion-chat');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.textContent = `${gameState.currentPlayer}: ${message}`;
+            
+            chat.appendChild(messageElement);
+            chat.scrollTop = chat.scrollHeight;
+            
+            messageInput.value = '';
+        }
+
         // Leave room
         function leaveRoom() {
+            // Reset game state
+            gameState.roomCode = '';
+            gameState.players = [];
+            gameState.currentPlayer = '';
+            gameState.isHost = false;
+            gameState.isImposter = false;
+            gameState.secretWord = '';
+            gameState.submittedWords = [];
+            gameState.votes = {};
+            
             showScreen('welcome-screen');
         }
 
         // Play again
         function playAgain() {
-            showScreen('game-screen');
+            // Reset round-specific state
+            gameState.submittedWords = [];
+            gameState.votes = {};
+            
+            // Start a new round
+            assignRoles();
+            showScreen('word-entry-screen');
         }
 
         // Back to lobby
@@ -576,6 +855,11 @@
                 };
             }
         }
+
+        // Initialize voting screen when shown
+        document.getElementById('voting-screen').addEventListener('click', function() {
+            setupVoting();
+        });
     </script>
 </body>
 </html>
