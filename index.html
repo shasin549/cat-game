@@ -4,505 +4,514 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Imposter</title>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .fade-in {
-            animation: fadeIn 0.5s;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: white;
         }
-        .pulse {
-            animation: pulse 2s infinite;
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
         }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #ffcc00;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ddd;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: #ffcc00;
+            color: #1a2a6c;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #ffd633;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .divider::before, .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .divider span {
+            padding: 0 15px;
+            color: #ddd;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .timer {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #ffcc00;
+        }
+        
+        .word-display {
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 30px 0;
+            color: #ffcc00;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .imposter-alert {
+            text-align: center;
+            background: rgba(255, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #ff0000;
+            margin: 20px 0;
+        }
+        
+        .player-list {
+            margin-top: 20px;
+        }
+        
+        .player {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .player-name {
+            font-weight: 500;
+        }
+        
+        .player-role {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        .success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff0000;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo span {
+            font-size: 3rem;
+            display: inline-block;
+            transform: rotate(10deg);
+            text-shadow: 3px 3px 0 #b21f1f;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <div id="app" class="container mx-auto px-4 py-8">
+<body>
+    <div class="container">
+        <div class="logo">
+            <span>🕵️</span>
+        </div>
+        <h1>Word Imposter</h1>
+        <p class="subtitle">A social deduction game where you need to find the imposter!</p>
+        
         <!-- Landing Page -->
-        <div id="landingPage" class="fade-in">
-            <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-                <h1 class="text-3xl font-bold text-center mb-2 text-blue-400">Word Imposter</h1>
-                <p class="text-center text-gray-400 mb-6">A social deduction game where you need to find the imposter!</p>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-2">Your Name</label>
-                    <input type="text" id="playerName" class="w-full p-2 bg-gray-700 rounded-md" placeholder="Enter your name">
+        <div id="landingPage">
+            <div class="card">
+                <div class="form-group">
+                    <label for="playerName">Your Name</label>
+                    <input type="text" id="playerName" placeholder="Enter your name">
                 </div>
                 
-                <div class="space-y-3">
-                    <button id="createRoomBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md transition">
-                        Create Room
-                    </button>
-                    
-                    <div class="relative my-4">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-600"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-gray-800 text-gray-400">Or</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium mb-2">Room Code</label>
-                        <input type="text" id="roomCode" class="w-full p-2 bg-gray-700 rounded-md uppercase" placeholder="Enter room code">
-                    </div>
-                    
-                    <button id="joinRoomBtn" class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded-md transition">
-                        Join Room
-                    </button>
+                <button id="createRoomBtn">Create Room</button>
+                
+                <div class="divider">
+                    <span>Or</span>
                 </div>
+                
+                <div class="form-group">
+                    <label for="roomCode">Room Code</label>
+                    <input type="text" id="roomCode" placeholder="Enter room code">
+                </div>
+                
+                <button id="joinRoomBtn">Join Room</button>
             </div>
         </div>
-
-        <!-- Lobby Page -->
-        <div id="lobbyPage" class="hidden fade-in">
-            <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-                <h2 class="text-2xl font-bold text-center mb-2">Room: <span id="roomCodeDisplay" class="text-blue-400"></span></h2>
-                <p class="text-center text-gray-400 mb-6">Share this code with other players</p>
+        
+        <!-- Create Room Form -->
+        <div id="createRoomPage" class="hidden">
+            <div class="card">
+                <h2>Create Room</h2>
                 
-                <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-2">Players (<span id="playerCount">0</span>)</h3>
-                    <div id="playersList" class="space-y-2">
-                        <!-- Players will be added here -->
-                    </div>
+                <div class="form-group">
+                    <label for="hostName">Your Name</label>
+                    <input type="text" id="hostName" value="Thik" placeholder="Enter your name">
                 </div>
-
-                <button id="startGameBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md transition">
-                    Start Game
-                </button>
+                
+                <div class="form-group">
+                    <label for="playerCount">Number of Players</label>
+                    <select id="playerCount">
+                        <option value="4">4 Players</option>
+                        <option value="5">5 Players</option>
+                        <option value="6">6 Players</option>
+                        <option value="7">7 Players</option>
+                        <option value="8">8 Players</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="imposterCount">Number of Imposters</label>
+                    <select id="imposterCount">
+                        <option value="1">1 Imposter</option>
+                        <option value="2">2 Imposters</option>
+                    </select>
+                </div>
+                
+                <button id="createRoomSubmit">Create Room</button>
+                <button id="backToLanding">Back</button>
             </div>
         </div>
-
+        
+        <!-- Join Room Form -->
+        <div id="joinRoomPage" class="hidden">
+            <div class="card">
+                <h2>Join Room</h2>
+                
+                <div class="form-group">
+                    <label for="joinPlayerName">Your Name</label>
+                    <input type="text" id="joinPlayerName" placeholder="Enter your name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="joinRoomCode">Room Code</label>
+                    <input type="text" id="joinRoomCode" placeholder="Enter room code">
+                </div>
+                
+                <button id="joinRoomSubmit">Join Room</button>
+                <button id="backToLanding2">Back</button>
+            </div>
+        </div>
+        
         <!-- Word Input Page -->
-        <div id="wordInputPage" class="hidden fade-in">
-            <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-                <h2 class="text-2xl font-bold text-center mb-6">Enter a Word</h2>
+        <div id="wordInputPage" class="hidden">
+            <div class="card">
+                <h2>Enter a Word</h2>
+                <p>You have <span id="timeLeft">30</span> seconds to submit your word</p>
                 
-                <div class="mb-4">
-                    <p class="text-center text-gray-400 mb-4">Each player will enter a word. One will be randomly selected as the secret word.</p>
-                    <textarea id="wordInput" class="w-full p-3 bg-gray-700 rounded-md h-24" placeholder="Enter your word here..."></textarea>
+                <div class="form-group">
+                    <textarea id="wordInput" placeholder="Enter your word here..." rows="3"></textarea>
                 </div>
-
-                <button id="submitWordBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md transition">
-                    Submit Word
-                </button>
+                
+                <button id="submitWordBtn">Submit Word</button>
+                
+                <div class="player-list">
+                    <h3>Players in Room:</h3>
+                    <div class="player">
+                        <span class="player-name">Thik (You)</span>
+                        <span class="player-role">Host</span>
+                    </div>
+                    <div class="player">
+                        <span class="player-name">Sarah</span>
+                        <span class="player-role">Ready</span>
+                    </div>
+                    <div class="player">
+                        <span class="player-name">Mike</span>
+                        <span class="player-role">Ready</span>
+                    </div>
+                    <div class="player">
+                        <span class="player-name">Emma</span>
+                        <span class="player-role">Writing...</span>
+                    </div>
+                </div>
             </div>
         </div>
-
+        
         <!-- Game Page -->
-        <div id="gamePage" class="hidden fade-in">
-            <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-                <h2 class="text-2xl font-bold text-center mb-6">Word Imposter</h2>
+        <div id="gamePage" class="hidden">
+            <div class="card">
+                <h2>Word Imposter</h2>
                 
-                <div id="imposterView" class="hidden text-center mb-6">
-                    <div class="bg-red-900 border border-red-700 px-4 py-3 rounded mb-4">
-                        <p class="font-bold text-xl">You are the Imposter!</p>
-                        <p>Try to blend in and guess the word.</p>
+                <div id="imposterView" class="imposter-alert hidden">
+                    <h3>You are the Imposter!</h3>
+                    <p>Try to blend in and guess the word without revealing yourself.</p>
+                </div>
+                
+                <div id="crewView" class="hidden">
+                    <p>The secret word is:</p>
+                    <div class="word-display">ELEPHANT</div>
+                    <p>Discuss this word without saying it directly!</p>
+                </div>
+                
+                <div class="timer">Discussion Time: 05:00</div>
+                
+                <div class="player-list">
+                    <h3>Players:</h3>
+                    <div class="player">
+                        <span class="player-name">Thik (You)</span>
+                        <span class="player-role">Crewmate</span>
+                    </div>
+                    <div class="player">
+                        <span class="player-name">Sarah</span>
+                        <span class="player-role">Crewmate</span>
+                    </div>
+                    <div class="player">
+                        <span class="player-name">Mike</span>
+                        <span class="player-role">Imposter</span>
+                    </div>
+                    <div class="player">
+                        <span class="player-name">Emma</span>
+                        <span class="player-role">Crewmate</span>
                     </div>
                 </div>
                 
-                <div id="crewView" class="hidden text-center mb-6">
-                    <p class="text-sm text-gray-400 mb-2">The secret word is:</p>
-                    <p id="secretWord" class="text-3xl font-bold text-blue-400 mb-4 pulse"></p>
-                    <p class="text-sm text-gray-400">Don't reveal it directly!</p>
-                </div>
-
-                <div class="mt-6 p-4 bg-yellow-900 border border-yellow-700 rounded-md">
-                    <h3 class="font-semibold mb-2">How to play:</h3>
-                    <ul class="text-sm list-disc list-inside space-y-1">
-                        <li>Discuss the word indirectly without saying it</li>
-                        <li>Imposter should try to blend in</li>
-                        <li>Vote for who you think is the imposter</li>
-                    </ul>
-                </div>
-
-                <button id="startVotingBtn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded-md transition mt-6">
-                    Proceed to Voting
-                </button>
-            </div>
-        </div>
-
-        <!-- Voting Page -->
-        <div id="votingPage" class="hidden fade-in">
-            <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-                <h2 class="text-2xl font-bold text-center mb-6">Voting Time</h2>
-                <p class="text-center text-gray-400 mb-6">Who do you think is the Imposter?</p>
-                
-                <div id="votingPlayers" class="space-y-3">
-                    <!-- Players will be added here -->
-                </div>
-
-                <p id="waitingVotes" class="text-center text-gray-400 mt-4 hidden">Waiting for other players to vote...</p>
-            </div>
-        </div>
-
-        <!-- Results Page -->
-        <div id="resultsPage" class="hidden fade-in">
-            <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-                <h2 class="text-2xl font-bold text-center mb-6">Game Results</h2>
-                
-                <div id="crewWin" class="hidden bg-green-900 border border-green-700 p-4 rounded-md mb-6">
-                    <p class="text-center font-bold text-lg">✅ Crew Wins!</p>
-                </div>
-                
-                <div id="imposterWin" class="hidden bg-red-900 border border-red-700 p-4 rounded-md mb-6">
-                    <p class="text-center font-bold text-lg">❌ Imposter Wins!</p>
-                </div>
-
-                <div class="space-y-4 mb-6">
-                    <div>
-                        <p class="font-semibold">Secret Word:</p>
-                        <p id="resultWord" class="text-xl text-blue-400"></p>
-                    </div>
-                    
-                    <div>
-                        <p class="font-semibold">The Imposter was:</p>
-                        <p id="imposterName" class="text-xl text-red-400"></p>
-                    </div>
-
-                    <div>
-                        <p class="font-semibold">Votes:</p>
-                        <div id="voteResults" class="mt-2">
-                            <!-- Vote results will be added here -->
-                        </div>
-                    </div>
-                </div>
-
-                <button id="playAgainBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md transition">
-                    Play Again
-                </button>
+                <button id="startVotingBtn">Proceed to Voting</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Mock socket.io implementation for demonstration
-        const mockSocket = {
-            emit: (event, data) => {
-                console.log(`Emitting ${event}:`, data);
-                
-                // Simulate server responses
-                if (event === 'createRoom') {
-                    setTimeout(() => {
-                        const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-                        mockListeners.roomCreated({ roomCode });
-                    }, 500);
-                }
-                
-                if (event === 'joinRoom') {
-                    setTimeout(() => {
-                        if (data.roomCode.length !== 6) {
-                            mockListeners.error({ message: 'Room not found' });
-                        } else {
-                            mockListeners.playerJoined({ 
-                                players: [
-                                    { id: 'host', name: data.playerName, isHost: true },
-                                    { id: 'player2', name: 'Player 2', isHost: false },
-                                    { id: 'player3', name: 'Player 3', isHost: false }
-                                ] 
-                            });
-                        }
-                    }, 500);
-                }
-                
-                if (event === 'startGame') {
-                    setTimeout(() => {
-                        mockListeners.gameStarted({ 
-                            players: [
-                                { id: 'host', name: document.getElementById('playerName').value, isImposter: false },
-                                { id: 'player2', name: 'Player 2', isImposter: true },
-                                { id: 'player3', name: 'Player 3', isImposter: false }
-                            ] 
-                        });
-                    }, 1000);
-                }
-                
-                if (event === 'submitWord') {
-                    setTimeout(() => {
-                        mockListeners.wordSubmitted({ status: 'received' });
-                    }, 300);
-                }
-                
-                if (event === 'startVoting') {
-                    setTimeout(() => {
-                        mockListeners.votingStarted({ 
-                            players: [
-                                { id: 'host', name: document.getElementById('playerName').value },
-                                { id: 'player2', name: 'Player 2' },
-                                { id: 'player3', name: 'Player 3' }
-                            ] 
-                        });
-                    }, 500);
-                }
-                
-                if (event === 'submitVote') {
-                    setTimeout(() => {
-                        mockListeners.voteResults({ 
-                            votes: {
-                                host: 1,
-                                player2: 2,
-                                player3: 0
-                            },
-                            eliminatedPlayer: 'Player 2',
-                            winner: 'crew',
-                            word: 'ELEPHANT',
-                            imposter: 'Player 2'
-                        });
-                    }, 1500);
-                }
-                
-                if (event === 'playAgain') {
-                    setTimeout(() => {
-                        mockListeners.gameReset({ 
-                            players: [
-                                { id: 'host', name: document.getElementById('playerName').value, isHost: true },
-                                { id: 'player2', name: 'Player 2', isHost: false },
-                                { id: 'player3', name: 'Player 3', isHost: false }
-                            ] 
-                        });
-                    }, 500);
-                }
-            },
-            on: (event, callback) => {
-                mockListeners[event] = callback;
-            },
-            off: (event) => {
-                delete mockListeners[event];
-            }
-        };
-
-        const mockListeners = {};
-        const socket = mockSocket; // Replace with real socket.io connection in production
-
-        // Game state
-        let gameState = {
-            roomCode: '',
-            playerName: '',
-            isHost: false,
-            players: [],
-            isImposter: false,
-            secretWord: '',
-            imposterId: ''
-        };
-
         // DOM Elements
-        const pages = {
-            landing: document.getElementById('landingPage'),
-            lobby: document.getElementById('lobbyPage'),
-            wordInput: document.getElementById('wordInputPage'),
-            game: document.getElementById('gamePage'),
-            voting: document.getElementById('votingPage'),
-            results: document.getElementById('resultsPage')
-        };
-
-        // Socket event handlers
-        socket.on('roomCreated', (data) => {
-            gameState.roomCode = data.roomCode;
-            document.getElementById('roomCodeDisplay').textContent = data.roomCode;
-            showPage('lobby');
-        });
-
-        socket.on('playerJoined', (data) => {
-            gameState.players = data.players;
-            updatePlayersList();
-        });
-
-        socket.on('gameStarted', (data) => {
-            gameState.players = data.players;
-            const imposter = data.players.find(p => p.isImposter);
-            gameState.isImposter = imposter && imposter.id === 'host'; // In real app, compare with actual player id
-            
-            if (gameState.isHost) {
-                showPage('wordInput');
-            } else {
-                // For demo, simulate word submission for non-host players
-                setTimeout(() => {
-                    showPage('game');
-                    if (gameState.isImposter) {
-                        document.getElementById('imposterView').classList.remove('hidden');
-                    } else {
-                        document.getElementById('crewView').classList.remove('hidden');
-                        document.getElementById('secretWord').textContent = 'ELEPHANT';
-                    }
-                }, 2000);
-            }
-        });
-
-        socket.on('wordSubmitted', (data) => {
-            if (data.status === 'received') {
-                showPage('game');
-                if (gameState.isImposter) {
-                    document.getElementById('imposterView').classList.remove('hidden');
-                } else {
-                    document.getElementById('crewView').classList.remove('hidden');
-                    document.getElementById('secretWord').textContent = 'ELEPHANT';
-                }
-            }
-        });
-
-        socket.on('votingStarted', (data) => {
-            gameState.players = data.players;
-            showVotingOptions();
-            showPage('voting');
-        });
-
-        socket.on('voteResults', (data) => {
-            showResults(data);
-            showPage('results');
-        });
-
-        socket.on('gameReset', (data) => {
-            gameState.players = data.players;
-            updatePlayersList();
-            showPage('lobby');
-        });
-
-        socket.on('error', (data) => {
-            alert(data.message);
-        });
-
-        // UI Functions
-        function showPage(pageName) {
-            // Hide all pages
-            Object.values(pages).forEach(page => {
-                page.classList.add('hidden');
-            });
-            
-            // Show the requested page
-            pages[pageName].classList.remove('hidden');
-        }
-
-        function updatePlayersList() {
-            const playersList = document.getElementById('playersList');
-            const playerCount = document.getElementById('playerCount');
-            
-            playersList.innerHTML = '';
-            playerCount.textContent = gameState.players.length;
-            
-            gameState.players.forEach(player => {
-                const playerEl = document.createElement('div');
-                playerEl.className = 'p-2 bg-gray-700 rounded-md';
-                playerEl.textContent = `${player.name} ${player.isHost ? '(Host)' : ''}`;
-                playersList.appendChild(playerEl);
-            });
-        }
-
-        function showVotingOptions() {
-            const votingPlayers = document.getElementById('votingPlayers');
-            votingPlayers.innerHTML = '';
-            
-            gameState.players.forEach(player => {
-                const button = document.createElement('button');
-                button.className = 'w-full p-3 bg-gray-700 hover:bg-gray-600 rounded-md text-left transition';
-                button.textContent = player.name;
-                button.onclick = () => {
-                    socket.emit('submitVote', { 
-                        roomCode: gameState.roomCode, 
-                        voteFor: player.id 
-                    });
-                    document.getElementById('waitingVotes').classList.remove('hidden');
-                    
-                    // Disable all buttons after voting
-                    document.querySelectorAll('#votingPlayers button').forEach(btn => {
-                        btn.disabled = true;
-                    });
-                };
-                votingPlayers.appendChild(button);
-            });
-        }
-
-        function showResults(data) {
-            const isCrewWin = data.winner === 'crew';
-            
-            if (isCrewWin) {
-                document.getElementById('crewWin').classList.remove('hidden');
-            } else {
-                document.getElementById('imposterWin').classList.remove('hidden');
-            }
-            
-            document.getElementById('resultWord').textContent = data.word;
-            document.getElementById('imposterName').textContent = data.imposter;
-            
-            const voteResults = document.getElementById('voteResults');
-            voteResults.innerHTML = '';
-            
-            for (const [playerId, votes] of Object.entries(data.votes)) {
-                const player = gameState.players.find(p => p.id === playerId);
-                if (player) {
-                    const voteEl = document.createElement('div');
-                    voteEl.className = 'flex justify-between items-center py-1';
-                    voteEl.innerHTML = `
-                        <span>${player.name}</span>
-                        <span class="bg-gray-700 px-2 py-1 rounded-md">${votes} votes</span>
-                    `;
-                    voteResults.appendChild(voteEl);
-                }
-            }
-        }
-
+        const landingPage = document.getElementById('landingPage');
+        const createRoomPage = document.getElementById('createRoomPage');
+        const joinRoomPage = document.getElementById('joinRoomPage');
+        const wordInputPage = document.getElementById('wordInputPage');
+        const gamePage = document.getElementById('gamePage');
+        
+        const playerNameInput = document.getElementById('playerName');
+        const roomCodeInput = document.getElementById('roomCode');
+        const hostNameInput = document.getElementById('hostName');
+        const joinPlayerNameInput = document.getElementById('joinPlayerName');
+        const joinRoomCodeInput = document.getElementById('joinRoomCode');
+        const wordInput = document.getElementById('wordInput');
+        const timeLeftDisplay = document.getElementById('timeLeft');
+        
+        // Buttons
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const createRoomSubmit = document.getElementById('createRoomSubmit');
+        const joinRoomSubmit = document.getElementById('joinRoomSubmit');
+        const backToLanding = document.getElementById('backToLanding');
+        const backToLanding2 = document.getElementById('backToLanding2');
+        const submitWordBtn = document.getElementById('submitWordBtn');
+        const startVotingBtn = document.getElementById('startVotingBtn');
+        
+        // Game state
+        let timer;
+        let timeLeft = 30;
+        
         // Event Listeners
-        document.getElementById('createRoomBtn').addEventListener('click', () => {
-            gameState.playerName = document.getElementById('playerName').value.trim();
-            if (!gameState.playerName) {
+        createRoomBtn.addEventListener('click', () => {
+            if (!playerNameInput.value.trim()) {
                 alert('Please enter your name');
                 return;
             }
             
-            gameState.isHost = true;
-            socket.emit('createRoom', { playerName: gameState.playerName });
+            hostNameInput.value = playerNameInput.value;
+            showPage(createRoomPage);
         });
-
-        document.getElementById('joinRoomBtn').addEventListener('click', () => {
-            gameState.playerName = document.getElementById('playerName').value.trim();
-            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
-            
-            if (!gameState.playerName) {
+        
+        joinRoomBtn.addEventListener('click', () => {
+            if (!playerNameInput.value.trim()) {
                 alert('Please enter your name');
                 return;
             }
             
-            if (!roomCode || roomCode.length !== 6) {
-                alert('Please enter a valid room code');
+            if (!roomCodeInput.value.trim()) {
+                alert('Please enter a room code');
                 return;
             }
             
-            gameState.roomCode = roomCode;
-            socket.emit('joinRoom', { roomCode, playerName: gameState.playerName });
+            joinPlayerNameInput.value = playerNameInput.value;
+            joinRoomCodeInput.value = roomCodeInput.value;
+            showPage(joinRoomPage);
         });
-
-        document.getElementById('startGameBtn').addEventListener('click', () => {
-            socket.emit('startGame', { roomCode: gameState.roomCode });
+        
+        createRoomSubmit.addEventListener('click', () => {
+            // In a real app, this would create a room on the server
+            // For this demo, we'll simulate room creation
+            startWordInput();
         });
-
-        document.getElementById('submitWordBtn').addEventListener('click', () => {
-            const word = document.getElementById('wordInput').value.trim();
-            if (!word) {
+        
+        joinRoomSubmit.addEventListener('click', () => {
+            if (!joinRoomCodeInput.value.trim()) {
+                alert('Please enter a room code');
+                return;
+            }
+            
+            // In a real app, this would validate the room code
+            // For this demo, we'll simulate joining a room
+            startWordInput();
+        });
+        
+        submitWordBtn.addEventListener('click', () => {
+            if (!wordInput.value.trim()) {
                 alert('Please enter a word');
                 return;
             }
             
-            socket.emit('submitWord', { 
-                roomCode: gameState.roomCode, 
-                word 
-            });
+            // In a real app, this would send the word to the server
+            clearInterval(timer);
+            startGame();
         });
-
-        document.getElementById('startVotingBtn').addEventListener('click', () => {
-            socket.emit('startVoting', { roomCode: gameState.roomCode });
+        
+        startVotingBtn.addEventListener('click', () => {
+            // This would transition to voting in a real app
+            alert('Voting would start now in the full game');
         });
-
-        document.getElementById('playAgainBtn').addEventListener('click', () => {
-            socket.emit('playAgain', { roomCode: gameState.roomCode });
+        
+        backToLanding.addEventListener('click', () => {
+            showPage(landingPage);
         });
+        
+        backToLanding2.addEventListener('click', () => {
+            showPage(landingPage);
+        });
+        
+        // Functions
+        function showPage(page) {
+            // Hide all pages
+            landingPage.classList.add('hidden');
+            createRoomPage.classList.add('hidden');
+            joinRoomPage.classList.add('hidden');
+            wordInputPage.classList.add('hidden');
+            gamePage.classList.add('hidden');
+            
+            // Show the requested page
+            page.classList.remove('hidden');
+        }
+        
+        function startWordInput() {
+            showPage(wordInputPage);
+            
+            // Start the timer
+            timeLeft = 30;
+            timeLeftDisplay.textContent = timeLeft;
+            
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                timeLeftDisplay.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    if (wordInput.value.trim()) {
+                        startGame();
+                    } else {
+                        // Auto-submit a random word if time runs out
+                        const randomWords = ['ELEPHANT', 'COMPUTER', 'TELEPHONE', 'MOUNTAIN', 'OCEAN'];
+                        wordInput.value = randomWords[Math.floor(Math.random() * randomWords.length)];
+                        startGame();
+                    }
+                }
+            }, 1000);
+        }
+        
+        function startGame() {
+            showPage(gamePage);
+            
+            // Randomly assign imposter role (25% chance for demo)
+            const isImposter = Math.random() < 0.25;
+            
+            if (isImposter) {
+                document.getElementById('imposterView').classList.remove('hidden');
+            } else {
+                document.getElementById('crewView').classList.remove('hidden');
+            }
+        }
+        
+        // Initialize with a player name
+        playerNameInput.value = "Thik";
+        roomCodeInput.value = "N30LIZ";
     </script>
 </body>
 </html>
