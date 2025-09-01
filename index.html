@@ -226,6 +226,15 @@
             color: #ffcc00;
             margin: 10px 0;
         }
+        
+        #votingPage .player-list button {
+            background: #4CAF50;
+            margin-bottom: 10px;
+        }
+        #votingPage .player-list button:hover {
+            background: #45a049;
+        }
+        
     </style>
 </head>
 <body>
@@ -236,7 +245,6 @@
         <h1>Word Imposter</h1>
         <p class="subtitle">A social deduction game where you need to find the imposter!</p>
         
-        <!-- Landing Page -->
         <div id="landingPage">
             <div class="card">
                 <div class="form-group">
@@ -259,7 +267,6 @@
             </div>
         </div>
         
-        <!-- Create Room Form -->
         <div id="createRoomPage" class="hidden">
             <div class="card">
                 <h2>Create Room</h2>
@@ -293,7 +300,6 @@
             </div>
         </div>
         
-        <!-- Join Room Form -->
         <div id="joinRoomPage" class="hidden">
             <div class="card">
                 <h2>Join Room</h2>
@@ -313,7 +319,6 @@
             </div>
         </div>
         
-        <!-- Lobby Page -->
         <div id="lobbyPage" class="hidden">
             <div class="card">
                 <h2>Room Lobby</h2>
@@ -325,8 +330,7 @@
                 <div class="form-group">
                     <label>Players in Room:</label>
                     <div id="playersList" class="player-list">
-                        <!-- Players will be added here dynamically -->
-                    </div>
+                        </div>
                 </div>
                 
                 <div id="lobbyStatus" class="status-message">Waiting for players to join...</div>
@@ -336,7 +340,6 @@
             </div>
         </div>
         
-        <!-- Word Input Page -->
         <div id="wordInputPage" class="hidden">
             <div class="card">
                 <h2>Enter a Word</h2>
@@ -351,13 +354,11 @@
                 <div class="player-list">
                     <h3>Players in Room:</h3>
                     <div id="wordInputPlayers">
-                        <!-- Players will be added here dynamically -->
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
         
-        <!-- Game Page -->
         <div id="gamePage" class="hidden">
             <div class="card">
                 <h2>Word Imposter</h2>
@@ -369,20 +370,41 @@
                 
                 <div id="crewView" class="hidden">
                     <p>The secret word is:</p>
-                    <div class="word-display" id="secretWordDisplay">ELEPHANT</div>
+                    <div class="word-display" id="secretWordDisplay"></div>
                     <p>Discuss this word without saying it directly!</p>
                 </div>
                 
-                <div class="timer">Discussion Time: 05:00</div>
+                <div class="timer" id="gameTimer"></div>
                 
                 <div class="player-list">
                     <h3>Players:</h3>
                     <div id="gamePlayers">
-                        <!-- Players will be added here dynamically -->
-                    </div>
+                        </div>
                 </div>
                 
                 <button id="startVotingBtn">Proceed to Voting</button>
+            </div>
+        </div>
+        
+        <div id="votingPage" class="hidden">
+            <div class="card">
+                <h2>Voting</h2>
+                <p>Who do you think is the imposter?</p>
+                
+                <div class="player-list" id="votingButtons">
+                    </div>
+            </div>
+        </div>
+
+        <div id="resultPage" class="hidden">
+            <div class="card">
+                <h2>Game Over</h2>
+                <div id="resultMessage" class="success"></div>
+                <div class="player-list">
+                    <h3>Roles:</h3>
+                    <div id="finalRoles"></div>
+                </div>
+                <button id="playAgainBtn">Play Again</button>
             </div>
         </div>
     </div>
@@ -395,6 +417,8 @@
         const lobbyPage = document.getElementById('lobbyPage');
         const wordInputPage = document.getElementById('wordInputPage');
         const gamePage = document.getElementById('gamePage');
+        const votingPage = document.getElementById('votingPage');
+        const resultPage = document.getElementById('resultPage');
         
         const playerNameInput = document.getElementById('playerName');
         const roomCodeInput = document.getElementById('roomCode');
@@ -410,6 +434,10 @@
         const secretWordDisplay = document.getElementById('secretWordDisplay');
         const startGameBtn = document.getElementById('startGameBtn');
         const lobbyStatus = document.getElementById('lobbyStatus');
+        const gameTimerDisplay = document.getElementById('gameTimer');
+        const votingButtonsDiv = document.getElementById('votingButtons');
+        const resultMessageDiv = document.getElementById('resultMessage');
+        const finalRolesDiv = document.getElementById('finalRoles');
         
         // Buttons
         const createRoomBtn = document.getElementById('createRoomBtn');
@@ -422,10 +450,14 @@
         const startVotingBtn = document.getElementById('startVotingBtn');
         const leaveLobbyBtn = document.getElementById('leaveLobbyBtn');
         const copyRoomCode = document.getElementById('copyRoomCode');
+        const playAgainBtn = document.getElementById('playAgainBtn');
         
         // Game state
         let timer;
+        let wordSubmitTimer;
+        let gameDiscussionTimer;
         let timeLeft = 30;
+        let gameTime = 120; // 2 minutes for discussion
         let gameState = {
             roomCode: '',
             playerName: '',
@@ -435,8 +467,162 @@
             playerCount: 4,
             isImposter: false,
             secretWord: '',
-            imposterId: ''
+            imposterId: '',
+            submittedWords: []
         };
+        
+        const allPages = [
+            landingPage,
+            createRoomPage,
+            joinRoomPage,
+            lobbyPage,
+            wordInputPage,
+            gamePage,
+            votingPage,
+            resultPage
+        ];
+        
+        function showPage(pageToShow) {
+            allPages.forEach(page => page.classList.add('hidden'));
+            pageToShow.classList.remove('hidden');
+        }
+        
+        function generateRoomCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+        
+        function updatePlayersList() {
+            playersList.innerHTML = '';
+            wordInputPlayers.innerHTML = '';
+            gamePlayers.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                const li = document.createElement('div');
+                li.className = 'player';
+                li.innerHTML = `<span class="player-name">${player.name}</span>`;
+                if (player.isHost) {
+                    li.innerHTML += `<span class="player-role">(Host)</span>`;
+                }
+                playersList.appendChild(li);
+                wordInputPlayers.appendChild(li.cloneNode(true));
+                gamePlayers.appendChild(li.cloneNode(true));
+            });
+        }
+        
+        function startWordInput() {
+            showPage(wordInputPage);
+            timeLeft = 30;
+            timeLeftDisplay.textContent = timeLeft;
+            wordInput.value = '';
+            
+            wordSubmitTimer = setInterval(() => {
+                timeLeft--;
+                timeLeftDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(wordSubmitTimer);
+                    // Force start game if timer runs out
+                    submitWordBtn.click();
+                }
+            }, 1000);
+            updatePlayersList();
+        }
+        
+        function startGame() {
+            // Randomly select one player to be the imposter
+            const imposterIndex = Math.floor(Math.random() * gameState.players.length);
+            gameState.imposterId = gameState.players[imposterIndex].id;
+            
+            // Assign roles
+            gameState.players.forEach(player => {
+                player.isImposter = (player.id === gameState.imposterId);
+            });
+            
+            // Randomly select one word from the submitted words
+            const allWords = gameState.submittedWords.map(p => p.word);
+            const commonWord = allWords[Math.floor(Math.random() * allWords.length)];
+            gameState.secretWord = commonWord;
+            
+            // Show the game page
+            showPage(gamePage);
+            
+            // Display word or imposter message based on player role
+            if (gameState.imposterId === gameState.players.find(p => p.name === gameState.playerName).id) {
+                // Current player is the imposter
+                document.getElementById('imposterView').classList.remove('hidden');
+                document.getElementById('crewView').classList.add('hidden');
+            } else {
+                // Current player is a crewmate
+                document.getElementById('imposterView').classList.add('hidden');
+                document.getElementById('crewView').classList.remove('hidden');
+                secretWordDisplay.textContent = gameState.secretWord;
+            }
+            
+            // Start the discussion timer
+            gameTime = 120; // 2 minutes
+            gameTimerDisplay.textContent = '02:00';
+            gameDiscussionTimer = setInterval(() => {
+                gameTime--;
+                const minutes = Math.floor(gameTime / 60);
+                const seconds = gameTime % 60;
+                gameTimerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (gameTime <= 0) {
+                    clearInterval(gameDiscussionTimer);
+                    startVotingBtn.click();
+                }
+            }, 1000);
+        }
+        
+        function startVoting() {
+            showPage(votingPage);
+            votingButtonsDiv.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                // Don't let a player vote for themselves in this simple example
+                // In a real game, you would use their socket ID
+                if (player.name !== gameState.playerName) {
+                    const button = document.createElement('button');
+                    button.textContent = `Vote for ${player.name}`;
+                    button.addEventListener('click', () => {
+                        handleVote(player.id);
+                    });
+                    votingButtonsDiv.appendChild(button);
+                }
+            });
+        }
+        
+        function handleVote(votedPlayerId) {
+            // This is a simplified voting system for a single-player demo
+            // In a real game, this would send the vote to the server
+            // and the server would tally all votes.
+            const votedPlayer = gameState.players.find(p => p.id === votedPlayerId);
+            
+            let message = '';
+            if (votedPlayer.isImposter) {
+                message = `You voted correctly! The imposter was ${votedPlayer.name}. Crewmates win!`;
+                resultMessageDiv.className = 'success';
+            } else {
+                message = `You voted for a crewmate! The imposter was ${gameState.players.find(p => p.isImposter).name}. Imposter wins!`;
+                resultMessageDiv.className = 'error';
+            }
+            
+            // Show result page
+            showResult(message);
+        }
+        
+        function showResult(message) {
+            showPage(resultPage);
+            resultMessageDiv.textContent = message;
+            finalRolesDiv.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                const div = document.createElement('div');
+                div.className = 'player';
+                const role = player.isImposter ? 'Imposter' : 'Crewmate';
+                div.innerHTML = `<span class="player-name">${player.name}</span><span class="player-role">${role}</span>`;
+                finalRolesDiv.appendChild(div);
+            });
+        }
         
         // Event Listeners
         createRoomBtn.addEventListener('click', () => {
@@ -444,7 +630,6 @@
                 alert('Please enter your name');
                 return;
             }
-            
             hostNameInput.value = playerNameInput.value;
             showPage(createRoomPage);
         });
@@ -454,80 +639,81 @@
                 alert('Please enter your name');
                 return;
             }
-            
             if (!roomCodeInput.value.trim()) {
                 alert('Please enter a room code');
                 return;
             }
-            
             joinPlayerNameInput.value = playerNameInput.value;
             joinRoomCodeInput.value = roomCodeInput.value;
             showPage(joinRoomPage);
         });
+        
+        backToLanding.addEventListener('click', () => showPage(landingPage));
+        backToLanding2.addEventListener('click', () => showPage(landingPage));
         
         createRoomSubmit.addEventListener('click', () => {
             if (!hostNameInput.value.trim()) {
                 alert('Please enter your name');
                 return;
             }
-            
-            // Generate a random room code
             gameState.roomCode = generateRoomCode();
             gameState.playerName = hostNameInput.value;
             gameState.isHost = true;
             gameState.playerCount = parseInt(document.getElementById('playerCount').value);
             gameState.imposterCount = parseInt(document.getElementById('imposterCount').value);
             
-            // Add host as first player
             gameState.players = [{
-                id: 'host',
+                id: 'host' + Date.now(),
                 name: gameState.playerName,
-                isHost: true,
-                status: 'connected'
+                isHost: true
             }];
             
-            // Show lobby with room code
             roomCodeDisplay.textContent = gameState.roomCode;
             updatePlayersList();
-            lobbyStatus.textContent = `Waiting for players to join (${gameState.players.length}/${gameState.playerCount})`;
-            
-            // Show start button only for host when enough players
-            if (gameState.players.length >= 3) {
-                startGameBtn.classList.remove('hidden');
-            }
+            lobbyStatus.textContent = `Waiting for players (${gameState.players.length}/${gameState.playerCount})`;
+            startGameBtn.classList.remove('hidden');
             
             showPage(lobbyPage);
+            
+            // Simulate other players joining for the demo
+            setTimeout(() => {
+                if (gameState.players.length < gameState.playerCount) {
+                    gameState.players.push({ id: 'player2', name: 'Player 2' });
+                    updatePlayersList();
+                    lobbyStatus.textContent = `Waiting for players (${gameState.players.length}/${gameState.playerCount})`;
+                }
+            }, 2000);
+            setTimeout(() => {
+                if (gameState.players.length < gameState.playerCount) {
+                    gameState.players.push({ id: 'player3', name: 'Player 3' });
+                    updatePlayersList();
+                    lobbyStatus.textContent = `Waiting for players (${gameState.players.length}/${gameState.playerCount})`;
+                }
+            }, 4000);
         });
         
         joinRoomSubmit.addEventListener('click', () => {
-            if (!joinPlayerNameInput.value.trim()) {
-                alert('Please enter your name');
+            if (!joinPlayerNameInput.value.trim() || !joinRoomCodeInput.value.trim()) {
+                alert('Please fill out all fields');
                 return;
             }
             
-            if (!joinRoomCodeInput.value.trim()) {
-                alert('Please enter a room code');
-                return;
-            }
-            
-            // In a real app, this would validate the room code with the server
-            // For this demo, we'll simulate joining a room
             gameState.roomCode = joinRoomCodeInput.value;
             gameState.playerName = joinPlayerNameInput.value;
             gameState.isHost = false;
             
-            // Add yourself to the players list
-            gameState.players.push({
-                id: 'player' + Date.now(),
-                name: gameState.playerName,
-                isHost: false,
-                status: 'connected'
-            });
+            // For this demo, assume the room exists and a host is present
+            // We'll add this player to the list
+            gameState.players.push({ id: 'player' + Date.now(), name: gameState.playerName, isHost: false });
             
-            // Show lobby with room code
+            // Simulate getting the full player list from the host
+            // In a real app, this would be a server-side event
+            const dummyPlayers = [{ id: 'host123', name: 'Host', isHost: true }];
+            gameState.players = [...dummyPlayers, ...gameState.players];
+            
             roomCodeDisplay.textContent = gameState.roomCode;
             updatePlayersList();
-            lobbyStatus.textContent = `Waiting for host to start the game`;
+            lobbyStatus.textContent = `Waiting for host to start the game.`;
             
             showPage(lobbyPage);
         });
@@ -547,207 +733,87 @@
         });
         
         startGameBtn.addEventListener('click', () => {
-            // Check if we have enough players
-            if (gameState.players.length < 3) {
-                alert('Need at least 3 players to start the game');
-                return;
+            if (gameState.isHost && gameState.players.length >= 3) {
+                startWordInput();
+            } else {
+                alert('Need at least 3 players to start!');
             }
-            
-            // Move to word input page
-            startWordInput();
-        });
-        
-        leaveLobbyBtn.addEventListener('click', () => {
-            // In a real app, this would notify the server
-            // For this demo, just go back to landing page
-            showPage(landingPage);
         });
         
         submitWordBtn.addEventListener('click', () => {
-            if (!wordInput.value.trim()) {
+            const submittedWord = wordInput.value.trim();
+            if (!submittedWord) {
                 alert('Please enter a word');
                 return;
             }
             
-            // In a real app, this would send the word to the server
-            clearInterval(timer);
+            clearInterval(wordSubmitTimer);
+            gameState.submittedWords.push({
+                id: gameState.players.find(p => p.name === gameState.playerName).id,
+                word: submittedWord
+            });
             
-            // Randomly select one player to be the imposter
-            const imposterIndex = Math.floor(Math.random() * gameState.players.length);
-            gameState.players[imposterIndex].isImposter = true;
-            gameState.imposterId = gameState.players[imposterIndex].id;
-            
-            // Check if current player is the imposter
-            gameState.isImposter = (gameState.players.find(p => p.name === gameState.playerName).id === gameState.imposterId);
-            
-            // Select a random word from all submitted words (in real app from server)
-            const randomWords = ['ELEPHANT', 'COMPUTER', 'TELEPHONE', 'MOUNTAIN', 'OCEAN', 'BUTTERFLY', 'RESTAURANT', 'LIBRARY'];
-            gameState.secretWord = randomWords[Math.floor(Math.random() * randomWords.length)];
-            
-            startGame();
+            // In a real app, this would be a server check
+            // For this demo, we'll assume the host has collected all words
+            // and starts the game
+            if (gameState.isHost) {
+                 // Simulate other players submitting words
+                for(let i=1; i < gameState.players.length; i++) {
+                    gameState.submittedWords.push({
+                        id: gameState.players[i].id,
+                        word: `word${i}`
+                    });
+                }
+                startGame();
+            } else {
+                // Non-host player would just wait for a message from the server
+                // For this demo, we can just move to a waiting screen
+                lobbyStatus.textContent = 'Waiting for all players to submit words...';
+                showPage(lobbyPage);
+            }
         });
         
         startVotingBtn.addEventListener('click', () => {
-            // This would transition to voting in a real app
-            alert('Voting would start now in the full game');
+            clearInterval(gameDiscussionTimer);
+            startVoting();
         });
         
-        backToLanding.addEventListener('click', () => {
+        playAgainBtn.addEventListener('click', () => {
+            // Reset game state and return to landing page
+            gameState = {
+                roomCode: '',
+                playerName: '',
+                isHost: false,
+                players: [],
+                imposterCount: 1,
+                playerCount: 4,
+                isImposter: false,
+                secretWord: '',
+                imposterId: '',
+                submittedWords: []
+            };
             showPage(landingPage);
         });
         
-        backToLanding2.addEventListener('click', () => {
+        leaveLobbyBtn.addEventListener('click', () => {
+            // Reset game state and return to landing page
+            gameState = {
+                roomCode: '',
+                playerName: '',
+                isHost: false,
+                players: [],
+                imposterCount: 1,
+                playerCount: 4,
+                isImposter: false,
+                secretWord: '',
+                imposterId: '',
+                submittedWords: []
+            };
             showPage(landingPage);
         });
         
-        // Functions
-        function showPage(page) {
-            // Hide all pages
-            landingPage.classList.add('hidden');
-            createRoomPage.classList.add('hidden');
-            joinRoomPage.classList.add('hidden');
-            lobbyPage.classList.add('hidden');
-            wordInputPage.classList.add('hidden');
-            gamePage.classList.add('hidden');
-            
-            // Show the requested page
-            page.classList.remove('hidden');
-        }
-        
-        function generateRoomCode() {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = '';
-            for (let i = 0; i < 6; i++) {
-                result += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
-            return result;
-        }
-        
-        function updatePlayersList() {
-            playersList.innerHTML = '';
-            gameState.players.forEach(player => {
-                const playerEl = document.createElement('div');
-                playerEl.className = 'player';
-                playerEl.innerHTML = `
-                    <span class="player-name">${player.name} ${player.name === gameState.playerName ? '(You)' : ''}</span>
-                    <span class="player-role">${player.isHost ? 'Host' : 'Player'}</span>
-                `;
-                playersList.appendChild(playerEl);
-            });
-            
-            // Update player count in status
-            if (lobbyPage.classList.contains('hidden') === false) {
-                if (gameState.isHost) {
-                    lobbyStatus.textContent = `Waiting for players to join (${gameState.players.length}/${gameState.playerCount})`;
-                    if (gameState.players.length >= 3) {
-                        startGameBtn.classList.remove('hidden');
-                    } else {
-                        startGameBtn.classList.add('hidden');
-                    }
-                }
-            }
-        }
-        
-        function updateWordInputPlayers() {
-            wordInputPlayers.innerHTML = '';
-            gameState.players.forEach(player => {
-                const playerEl = document.createElement('div');
-                playerEl.className = 'player';
-                
-                let status = 'Connected';
-                if (player.name === gameState.playerName) {
-                    status = 'You';
-                }
-                
-                playerEl.innerHTML = `
-                    <span class="player-name">${player.name}</span>
-                    <span class="player-role">${status}</span>
-                `;
-                wordInputPlayers.appendChild(playerEl);
-            });
-        }
-        
-        function updateGamePlayers() {
-            gamePlayers.innerHTML = '';
-            gameState.players.forEach(player => {
-                const playerEl = document.createElement('div');
-                playerEl.className = 'player';
-                
-                let role = 'Crewmate';
-                if (player.isImposter) {
-                    role = 'Imposter';
-                }
-                
-                playerEl.innerHTML = `
-                    <span class="player-name">${player.name} ${player.name === gameState.playerName ? '(You)' : ''}</span>
-                    <span class="player-role">${role}</span>
-                `;
-                gamePlayers.appendChild(playerEl);
-            });
-        }
-        
-        function startWordInput() {
-            showPage(wordInputPage);
-            updateWordInputPlayers();
-            
-            // Start the timer
-            timeLeft = 30;
-            timeLeftDisplay.textContent = timeLeft;
-            
-            clearInterval(timer);
-            timer = setInterval(() => {
-                timeLeft--;
-                timeLeftDisplay.textContent = timeLeft;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    if (wordInput.value.trim()) {
-                        // In a real app, this would submit the word automatically
-                    } else {
-                        // Auto-submit a random word if time runs out
-                        const randomWords = ['ELEPHANT', 'COMPUTER', 'TELEPHONE', 'MOUNTAIN', 'OCEAN'];
-                        wordInput.value = randomWords[Math.floor(Math.random() * randomWords.length)];
-                    }
-                }
-            }, 1000);
-        }
-        
-        function startGame() {
-            showPage(gamePage);
-            updateGamePlayers();
-            
-            if (gameState.isImposter) {
-                document.getElementById('imposterView').classList.remove('hidden');
-            } else {
-                document.getElementById('crewView').classList.remove('hidden');
-                secretWordDisplay.textContent = gameState.secretWord;
-            }
-        }
-        
-        // Initialize with a player name
-        playerNameInput.value = "Thik";
-        roomCodeInput.value = "N30LIZ";
-        
-        // Simulate adding more players (for demo purposes)
-        setTimeout(() => {
-            if (lobbyPage.classList.contains('hidden') === false && gameState.isHost) {
-                // Add simulated players
-                const simulatedPlayers = [
-                    { id: 'p2', name: 'Sarah', isHost: false, status: 'connected' },
-                    { id: 'p3', name: 'Mike', isHost: false, status: 'connected' },
-                    { id: 'p4', name: 'Emma', isHost: false, status: 'connected' }
-                ];
-                
-                // Only add if we don't have these players already
-                simulatedPlayers.forEach(simPlayer => {
-                    if (!gameState.players.find(p => p.name === simPlayer.name)) {
-                        gameState.players.push(simPlayer);
-                    }
-                });
-                
-                updatePlayersList();
-            }
-        }, 2000);
+        // Initial page load
+        showPage(landingPage);
     </script>
 </body>
 </html>
